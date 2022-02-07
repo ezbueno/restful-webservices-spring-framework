@@ -1,19 +1,27 @@
 package com.buenoezandro.app.ws.ui.model.response;
 
 public class UserRest {
+	private static int idGenerator = 1;
 	private String firstName;
 	private String lastName;
 	private String email;
-	private String userId;
-	
+	private Integer userId;
+
 	public UserRest() {
 	}
-	
-	public UserRest(String firstName, String lastName, String email, String userId) {
+
+	public UserRest(String firstName, String lastName, String email, Integer userId) {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
 		this.userId = userId;
+	}
+
+	public UserRest(String firstName, String lastName, String email) {
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
+		this.userId = idGenerator++;
 	}
 
 	public String getFirstName() {
@@ -40,11 +48,11 @@ public class UserRest {
 		this.email = email;
 	}
 
-	public String getUserId() {
+	public Integer getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Integer userId) {
 		this.userId = userId;
 	}
 }
