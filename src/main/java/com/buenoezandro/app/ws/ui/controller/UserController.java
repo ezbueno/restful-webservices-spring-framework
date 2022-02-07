@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.buenoezandro.app.ws.ui.model.request.UpdateUserDetailsRequestModel;
 import com.buenoezandro.app.ws.ui.model.request.UserDetailsRequestModel;
 import com.buenoezandro.app.ws.ui.model.response.UserRest;
 
@@ -52,30 +53,38 @@ public class UserController {
 	}
 
 	@ResponseStatus(code = HttpStatus.CREATED)
-	@PostMapping(consumes = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE }, 
-				produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE })
+	@PostMapping(
+		consumes = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE },
+		produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE }
+	)
 	public ResponseEntity<UserRest> createUser(@Valid @RequestBody UserDetailsRequestModel userDetailsRequestModel) {
-
 		Integer id = this.random.nextInt(BOUND);
 
 		if (isNull(this.users)) {
 			this.users = new HashMap<>();
 			this.users.put(id, 
-				new UserRest(
-					userDetailsRequestModel.getFirstName(),
+				new UserRest(userDetailsRequestModel.getFirstName(),
 					userDetailsRequestModel.getLastName(), 
 					userDetailsRequestModel.getEmail(), id)
 				);
 		}
 
 		var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{userId}").buildAndExpand(id).toUri();
-
 		return ResponseEntity.created(uri).build();
 	}
 
-	@PutMapping
-	public String updateUser() {
-		return "update user was called";
+	@PutMapping(path = "/{userId}",
+		consumes = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE }, 
+		produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE }
+	)
+	public UserRest updateUser(@PathVariable(value = "userId") Integer id, 
+		@Valid @RequestBody UpdateUserDetailsRequestModel updateUserDetailsRequestModel) {
+		var storedUserDetails = this.users.get(id);
+		storedUserDetails.setFirstName(updateUserDetailsRequestModel.getFirstName());
+		storedUserDetails.setLastName(updateUserDetailsRequestModel.getLastName());
+		
+		this.users.put(id, storedUserDetails);
+		return storedUserDetails;
 	}
 
 	@DeleteMapping
