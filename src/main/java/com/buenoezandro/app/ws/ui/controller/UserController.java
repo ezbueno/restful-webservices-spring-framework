@@ -1,7 +1,12 @@
 package com.buenoezandro.app.ws.ui.controller;
 
+import static java.util.Objects.isNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.APPLICATION_XML_VALUE;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 import javax.validation.Valid;
 
@@ -15,7 +20,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.buenoezandro.app.ws.ui.model.request.UserDetailsRequestModel;
 import com.buenoezandro.app.ws.ui.model.response.UserRest;
@@ -23,6 +30,10 @@ import com.buenoezandro.app.ws.ui.model.response.UserRest;
 @RestController
 @RequestMapping(path = "/users")
 public class UserController {
+	private static final int BOUND = 100;
+	private Map<Integer, UserRest> users;
+	private Random random = new Random();
+
 	@GetMapping
 	public String getUsers(@RequestParam(value = "page", defaultValue = "1") int page,
 			@RequestParam(value = "limit", defaultValue = "50") int limit,
@@ -32,14 +43,34 @@ public class UserController {
 
 	@GetMapping(path = "/{userId}", produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE })
 	public ResponseEntity<UserRest> getUser(@PathVariable(value = "userId") Integer id) {
-		return new ResponseEntity<>(new UserRest("Ezandro", "Bueno", "ezb@teste.com", id), HttpStatus.OK);
+
+		if (this.users.containsKey(id)) {
+			return new ResponseEntity<>(this.users.get(id), HttpStatus.OK);
+		}
+
+		return ResponseEntity.notFound().build();
 	}
 
-	@PostMapping(consumes = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE }, produces = { APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE })
+	@ResponseStatus(code = HttpStatus.CREATED)
+	@PostMapping(consumes = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE }, 
+				produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE })
 	public ResponseEntity<UserRest> createUser(@Valid @RequestBody UserDetailsRequestModel userDetailsRequestModel) {
-		return new ResponseEntity<>(new UserRest(userDetailsRequestModel.getFirstName(),
-				userDetailsRequestModel.getLastName(), userDetailsRequestModel.getEmail()), HttpStatus.CREATED);
+
+		Integer id = this.random.nextInt(BOUND);
+
+		if (isNull(this.users)) {
+			this.users = new HashMap<>();
+			this.users.put(id, 
+				new UserRest(
+					userDetailsRequestModel.getFirstName(),
+					userDetailsRequestModel.getLastName(), 
+					userDetailsRequestModel.getEmail(), id)
+				);
+		}
+
+		var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{userId}").buildAndExpand(id).toUri();
+
+		return ResponseEntity.created(uri).build();
 	}
 
 	@PutMapping

@@ -1,7 +1,6 @@
 package com.buenoezandro.app.ws.ui.model.response;
 
 public class UserRest {
-	private static int idGenerator = 1;
 	private String firstName;
 	private String lastName;
 	private String email;
@@ -15,13 +14,6 @@ public class UserRest {
 		this.lastName = lastName;
 		this.email = email;
 		this.userId = userId;
-	}
-
-	public UserRest(String firstName, String lastName, String email) {
-		this.firstName = firstName;
-		this.lastName = lastName;
-		this.email = email;
-		this.userId = idGenerator++;
 	}
 
 	public String getFirstName() {
