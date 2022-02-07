@@ -39,7 +39,7 @@ public class UserController {
 	public String getUsers(@RequestParam(value = "page", defaultValue = "1") int page,
 			@RequestParam(value = "limit", defaultValue = "50") int limit,
 			@RequestParam(value = "sort", defaultValue = "desc", required = false) String sort) {
-		return "get user was called with page = " + page + " and limit = " + limit + " and sort = " + sort;
+		return "Get user was called with page = " + page + " and limit = " + limit + " and sort = " + sort;
 	}
 
 	@GetMapping(path = "/{userId}", produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE })
@@ -87,8 +87,9 @@ public class UserController {
 		return storedUserDetails;
 	}
 
-	@DeleteMapping
-	public String deletUser() {
-		return "delete user was called";
+	@DeleteMapping(path = "/{userId}")
+	public ResponseEntity<Void> deletUser(@PathVariable(value = "userId") Integer id) {
+		this.users.remove(id);
+		return ResponseEntity.noContent().build();
 	}
 }
