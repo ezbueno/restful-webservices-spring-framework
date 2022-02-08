@@ -1,12 +1,8 @@
 package com.buenoezandro.app.ws.ui.controller;
 
-import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.APPLICATION_XML_VALUE;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
 
 import javax.validation.Valid;
 
@@ -24,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.buenoezandro.app.ws.service.UserService;
 import com.buenoezandro.app.ws.ui.model.request.UpdateUserDetailsRequestModel;
 import com.buenoezandro.app.ws.ui.model.request.UserDetailsRequestModel;
 import com.buenoezandro.app.ws.ui.model.response.UserRest;
@@ -31,9 +28,11 @@ import com.buenoezandro.app.ws.ui.model.response.UserRest;
 @RestController
 @RequestMapping(path = "/users")
 public class UserController {
-	private static final int BOUND = 100;
-	private Map<Integer, UserRest> users;
-	private Random random = new Random();
+	private final UserService userService;
+	
+	public UserController(UserService userService) {
+		this.userService = userService;
+	}
 
 	@GetMapping
 	public String getUsers(@RequestParam(value = "page", defaultValue = "1") int page,
@@ -43,11 +42,13 @@ public class UserController {
 	}
 
 	@GetMapping(path = "/{userId}", produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE })
-	public ResponseEntity<UserRest> getUser(@PathVariable(value = "userId") Integer id) {		
-		if (this.users.containsKey(id)) {
-			return new ResponseEntity<>(this.users.get(id), HttpStatus.OK);
+	public ResponseEntity<UserRest> getUser(@PathVariable(value = "userId") Integer id) {
+		var userId = this.userService.getUserById(id);
+		
+		if (nonNull(userId)) {
+			return new ResponseEntity<>(userId, HttpStatus.OK);
 		}
-
+		
 		return ResponseEntity.notFound().build();
 	}
 
@@ -57,18 +58,14 @@ public class UserController {
 		produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE }
 	)
 	public ResponseEntity<UserRest> createUser(@Valid @RequestBody UserDetailsRequestModel userDetailsRequestModel) {
-		Integer id = this.random.nextInt(BOUND);
+		var newUser = this.userService.create(userDetailsRequestModel);
 
-		if (isNull(this.users)) {
-			this.users = new HashMap<>();
-			this.users.put(id, 
-				new UserRest(userDetailsRequestModel.getFirstName(),
-					userDetailsRequestModel.getLastName(), 
-					userDetailsRequestModel.getEmail(), id)
-				);
-		}
-
-		var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{userId}").buildAndExpand(id).toUri();
+		var uri = ServletUriComponentsBuilder
+				.fromCurrentRequest()
+				.path("/{userId}")
+				.buildAndExpand(newUser.getUserId())
+				.toUri();
+		
 		return ResponseEntity.created(uri).build();
 	}
 
@@ -78,17 +75,15 @@ public class UserController {
 	)
 	public UserRest updateUser(@PathVariable(value = "userId") Integer id, 
 		@Valid @RequestBody UpdateUserDetailsRequestModel updateUserDetailsRequestModel) {
-		var storedUserDetails = this.users.get(id);
-		storedUserDetails.setFirstName(updateUserDetailsRequestModel.getFirstName());
-		storedUserDetails.setLastName(updateUserDetailsRequestModel.getLastName());
-		
-		this.users.put(id, storedUserDetails);
-		return storedUserDetails;
+		return this.userService.update(id, updateUserDetailsRequestModel);
 	}
 
 	@DeleteMapping(path = "/{userId}")
 	public ResponseEntity<Void> deletUser(@PathVariable(value = "userId") Integer id) {
-		this.users.remove(id);
-		return ResponseEntity.noContent().build();
+		if (nonNull(id)) {
+			this.userService.delete(id);
+			return ResponseEntity.noContent().build();			
+		}
+		return ResponseEntity.notFound().build();
 	}
 }
