@@ -44,7 +44,6 @@ public class UserController {
 
 	@GetMapping(path = "/{userId}", produces = { APPLICATION_JSON_VALUE, APPLICATION_XML_VALUE })
 	public ResponseEntity<UserRest> getUser(@PathVariable(value = "userId") Integer id) {
-
 		if (this.users.containsKey(id)) {
 			return new ResponseEntity<>(this.users.get(id), HttpStatus.OK);
 		}
